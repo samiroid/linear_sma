@@ -24,14 +24,16 @@ def get_parser():
     return parser
 
 def bow_features(X_idx,bow_weights):
-	X = np.zeros((len(X_idx),len(wrd2idx)))		
+	X = np.zeros((len(X_idx),len(wrd2idx)))			
 	if bow_weights == "bin":
-		for i, doc in enumerate(X_idx):	X[i,doc] = 1			
+		for i, doc in enumerate(X_idx):	
+			if len(doc)>0 : X[i,doc] = 1  			
 	elif bow_weights == "freq":
 		for i, doc in enumerate(X_idx):	
-			#word counts
-			ctr = Counter(doc)						
-			X[i,doc] = [ctr[w] for w in doc]
+			if len(doc)>0 : 
+				#word counts
+				ctr = Counter(doc)						
+				X[i,doc] = [ctr[w] for w in doc]
 	else:
 		raise NotImplementedError
 	return X
@@ -54,9 +56,10 @@ if __name__=="__main__":
 	
 	print "[Training Data: %s" % os.path.basename(args.tr)
 	datasets=[]
-	feature_set = set()
+	feature_set = set()	
 	print "[building feature vectors]"
 	for dataset in [args.tr] + args.ts:		
+		print "\t> %s" % dataset
 		with open(dataset) as fid:		
 			wrd2idx, X_idx, Y = cPickle.load(fid)		
 			Y = np.array(Y)
@@ -90,7 +93,7 @@ if __name__=="__main__":
 		clf.fit(X,Y)
 		for test_set, test_X, test_Y in datasets[1:]:						
 			Y_hat = clf.predict(test_X)
-			prec  = precision_score(test_Y, Y_hat, average="micro")
+			prec  = precision_score(test_Y, Y_hat, average="macro")
 			acc   = accuracy_score(test_Y, Y_hat)			
 			print "   %s > acc: %.3f | avg prec: %.3f" % (os.path.basename(test_set), acc, prec)	
 			with open("%s%s-%s" % (args.res, os.path.basename(args.tr),features),"w") as fod:
